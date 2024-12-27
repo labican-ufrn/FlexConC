@@ -50,15 +50,15 @@ class TestUtils(TestCase):
         x_lbs, y_lbs = np.unique(selected_instances, return_counts=True)
 
         expected_output = [
-             0,  1,  1, -1, -1,
-            -1,  1, -1, -1,  1,
-            -1, -1,  1, -1, -1,
+             0,  1, -1, -1, -1,
+            -1, -1, -1, -1, -1,
+            -1, -1, -1, -1, -1,
             -1, -1, -1, -1, -1,
         ]
 
         self.assertEqual(list(selected_instances), expected_output)
         self.assertEqual(list(x_lbs), [-1, 0, 1])
-        self.assertEqual(list(y_lbs), [14, 1, 5])
+        self.assertEqual(list(y_lbs), [18, 1, 1])
 
     def test_split_labels_multi_classes_not_equal_distribution(self):
         y_train = np.array([

@@ -14,7 +14,7 @@ repos:
     - id: unit-tests
       name: Unit tests
       entry: python -m unittest
-      args: ['discover']
+      args: ['discover', 'tests']
       language: system
       pass_filenames: false
     - id: isort
