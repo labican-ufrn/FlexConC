@@ -7,8 +7,6 @@ from sklearn.metrics import accuracy_score
 from sklearn.semi_supervised import SelfTrainingClassifier
 from sklearn.utils import safe_mask
 
-from src.utils import validate_estimator
-
 
 class BaseFlexConC(SelfTrainingClassifier):
     """
@@ -20,7 +18,6 @@ class BaseFlexConC(SelfTrainingClassifier):
         super().__init__(
             base_estimator=base_estimator, threshold=threshold, max_iter=100
         )
-        self.validate()
         self.cr: float = cr
         self.threshold: float = threshold
         self.verbose = verbose
@@ -33,7 +30,6 @@ class BaseFlexConC(SelfTrainingClassifier):
         self.termination_condition_ = ""
         self.pred_x_it: Dict = {}
         self.cl_memory: List = []
-        self.size_y: int = 0
         self.base_estimator_ = clone(self.base_estimator)
         self.base_estimator_select_ = clone(self.base_estimator)
 
@@ -48,7 +44,9 @@ class BaseFlexConC(SelfTrainingClassifier):
             generally done in meta-estimator or pipeline.
         """
         try:
-            validate_estimator(self.base_estimator)
+            if not hasattr(self.base_estimator, "predict_proba"):
+                msg = "base_estimator ({}) should implement predict_proba!"
+                raise ValueError(msg.format(type(self.base_estimator).__name__))
         except ValueError:
             return False
         return True
@@ -268,10 +266,26 @@ class BaseFlexConC(SelfTrainingClassifier):
         Args:
             selected_full: lista com os indices das instâncias originais
             selected: lista das intâncias com acc acima do limiar
+            local_acc: acurácia do modelo treinado com base na lista selected
+            init_acc: acurácia do modelo treinado com base na lista selected_full
+            max_proba: valores de probabilidade de predição das intâncias não rotuladas
             pred: predição das instâncias não rotuladas
         """
         self.transduction_[selected_full] = pred[selected]
         self.labeled_iter_[selected_full] = self.n_iter_
+
+        if selected_full.shape[0] > 0:
+            # no changed labels
+            self.new_threshold(local_acc, init_acc)
+            self.termination_condition_ = "threshold_change"
+        else:
+            self.threshold = np.max(max_proba)
+
+        if self.verbose:
+            print(
+                f"End of iteration {self.n_iter_},"
+                f" added {len(selected)} new labels."
+            )
 
     def select_instances_by_rules(self):
         """

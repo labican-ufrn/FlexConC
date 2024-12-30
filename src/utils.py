@@ -19,31 +19,28 @@ list_tree = [
     Tree(max_features=None, splitter="random")]
 
 list_knn_Prelax = [
-    KNN(n_neighbors=4, weights='distance'),KNN(n_neighbors=4),
-    KNN(n_neighbors=5, weights='distance'),KNN(n_neighbors=5),
-    KNN(n_neighbors=5, weights='distance'),KNN(n_neighbors=5),
-    KNN(n_neighbors=5, weights='distance'),KNN(n_neighbors=5),
-    KNN(n_neighbors=5, weights='distance'),KNN(n_neighbors=5)]
+    KNN(n_neighbors=4, weights='distance'), KNN(n_neighbors=4),
+    KNN(n_neighbors=5, weights='distance'), KNN(n_neighbors=5),
+    KNN(n_neighbors=5, weights='distance'), KNN(n_neighbors=5),
+    KNN(n_neighbors=5, weights='distance'), KNN(n_neighbors=5),
+    KNN(n_neighbors=5, weights='distance'), KNN(n_neighbors=5)
+]
 
 list_knn_seeds = [
-    KNN(n_neighbors=4, weights='distance'),KNN(n_neighbors=4),
-    KNN(n_neighbors=5, weights='distance'),KNN(n_neighbors=5),
-    KNN(n_neighbors=6, weights='distance'),KNN(n_neighbors=6),
-    KNN(n_neighbors=6, weights='distance'),KNN(n_neighbors=6),
-    KNN(n_neighbors=6, weights='distance'),KNN(n_neighbors=6)]
+    KNN(n_neighbors=4, weights='distance'), KNN(n_neighbors=4),
+    KNN(n_neighbors=5, weights='distance'), KNN(n_neighbors=5),
+    KNN(n_neighbors=6, weights='distance'), KNN(n_neighbors=6),
+    KNN(n_neighbors=6, weights='distance'), KNN(n_neighbors=6),
+    KNN(n_neighbors=6, weights='distance'), KNN(n_neighbors=6)
+]
 
 list_knn_full = [
-    KNN(n_neighbors=4, weights='distance'),KNN(n_neighbors=4),
-    KNN(n_neighbors=5, weights='distance'),KNN(n_neighbors=5),
-    KNN(n_neighbors=6, weights='distance'),KNN(n_neighbors=6),
-    KNN(n_neighbors=7, weights='distance'),KNN(n_neighbors=7),
-    KNN(n_neighbors=8, weights='distance'),KNN(n_neighbors=8)]
-
-def validate_estimator(estimator):
-    """Make sure that an estimator implements the necessary methods."""
-    if not hasattr(estimator, "predict_proba"):
-        msg = "base_estimator ({}) should implement predict_proba!"
-        raise ValueError(msg.format(type(estimator).__name__))
+    KNN(n_neighbors=4, weights='distance'), KNN(n_neighbors=4),
+    KNN(n_neighbors=5, weights='distance'), KNN(n_neighbors=5),
+    KNN(n_neighbors=6, weights='distance'), KNN(n_neighbors=6),
+    KNN(n_neighbors=7, weights='distance'), KNN(n_neighbors=7),
+    KNN(n_neighbors=8, weights='distance'), KNN(n_neighbors=8)
+]
 
 def select_labels(y_train, X_train, labelled_percentage):
     """
@@ -78,83 +75,36 @@ def select_labels(y_train, X_train, labelled_percentage):
 
 def result(option, dataset, y_test, y_pred, path, labelled_level, rounds):
     """
-    Responsável por salvar os outputs dos cômites em arquivos
+    Salva os resultados dos comitês em arquivos CSV com base na opção escolhida.
+
     Args:
-        option (int): Opção de escolha do usuário
-        dataset (string): Base de dados nome
-        y_test (Array): Rótulos usadas para testes
-        y_pred (Array): Rótulos predizidos pelo modelo
-        comite (): Cômite de classificadores
-        labelled_level (float): % que foi selecionada na iteração
+        option (int): Identificador do comitê.
+        dataset (str): Nome do dataset.
+        y_test (list): Rótulos verdadeiros para teste.
+        y_pred (list): Rótulos previstos pelo modelo.
+        path (str): Caminho do diretório para salvar os arquivos.
+        labelled_level (float): Percentual de dados rotulados na iteração.
+        rounds (int): Número da rodada atual.
+
+    Returns:
+        float: F1-Score (macro) multiplicado por 100.
     """
-    acc = round(accuracy_score(y_test, y_pred) * 100, 4)
-    f1 = round(f1_score(y_test, y_pred, average="macro") * 100, 4)
-    if option == 1:
-        with open(f'{path}/Comite_Naive_.csv', 'a', encoding='utf=8') as f:
-            f.write(
-                #ROUNDS
-                f'\n{rounds},'
-                # DATASET
-                f'"{dataset}",'
-                # LABELLED-LEVEL
-                f'{labelled_level},'
-                #ACC
-                f'{acc},'
-                #F1-Score
-                f'{f1}'
-            )
-            f1 = f1_score(y_test, y_pred, average="macro") * 100
-        return f1
+    acc = accuracy_score(y_test, y_pred)
+    f1 = f1_score(y_test, y_pred, average="macro")
 
-    if option == 2:
-        with open(f'{path}/Comite_Tree_.csv', 'a', encoding='utf=8') as f:
-            f.write(
-                #ROUNDS
-                f'\n{rounds},'
-                # DATASET
-                f'"{dataset}",'
-                # LABELLED-LEVEL
-                f'{labelled_level},'
-                #ACC
-                f'{acc},'
-                #F1-Score
-                f'{f1}'
-            )
-            f1 = f1_score(y_test, y_pred, average="macro") * 100
-        return f1
+    committee_files = {
+        1: "Comite_Naive_.csv",
+        2: "Comite_Tree_.csv",
+        3: "Comite_KNN_.csv",
+        4: "Comite_Heterogeneo_.csv",
+    }
 
-    if option == 3:
-        with open(f'{path}/Comite_KNN_.csv', 'a', encoding='utf=8') as f:
-            f.write(
-                #ROUNDS
-                f'\n{rounds},'
-                # DATASET
-                f'"{dataset}",'
-                # LABELLED-LEVEL
-                f'{labelled_level},'
-                #ACC
-                f'{acc},'
-                #F1-Score
-                f'{f1}'
-            )
-            f1 = f1_score(y_test, y_pred, average="macro") * 100
-        return f1
+    file_name = committee_files.get(option, "Comite_Heterogeneo_.csv")
 
-    with open(f'{path}/Comite_Heterogeneo_.csv', 'a', encoding='utf=8') as f:
-        f.write(
-            #ROUNDS
-            f'\n{rounds},'
-            # DATASET
-            f'"{dataset}",'
-            # LABELLED-LEVEL
-            f'{labelled_level},'
-            #ACC
-            f'{acc},'
-            #F1-Score
-            f'{f1}'
-        )
-        f1 = f1_score(y_test, y_pred, average="macro") * 100
-    return f1
+    with open(f'{path}/{file_name}', 'a', encoding='utf-8') as f:
+        f.write(f'\n{rounds},"{dataset}",{labelled_level},{acc},{f1}')
+
+    return f1 * 100
 
 def calculate_mean_stdev(
     fold_result_acc,
@@ -165,83 +115,31 @@ def calculate_mean_stdev(
     fold_result_f1_score
 ):
     """
-    Calcula a média de acc e f1_score dependendo do comitê
+    Calcula e salva a média e o desvio padrão de ACC e F1-Score para diferentes comitês.
 
     Args:
-        fold_result_acc (_type_): _description_
-        option (_type_): _description_
-        labelled_level (_type_): _description_
-        path (_type_): _description_
-        dataset (_type_): _description_
-        fold_result_f1_score (_type_): _description_
+        fold_result_acc (list): Lista de ACCs por rodada.
+        option (int): Identificador do comitê.
+        labelled_level (float): Percentual de dados rotulados.
+        path (str): Caminho do diretório para salvar os arquivos.
+        dataset (str): Nome do dataset.
+        fold_result_f1_score (list): Lista de F1-Scores por rodada.
     """
-    acc_average = round(mean(fold_result_acc), 4)
-    standard_deviation_acc = round(stdev(fold_result_acc), 4)
-    f1_average = round(mean(fold_result_f1_score), 4)
-    standard_deviation_f1 = round(stdev(fold_result_f1_score), 4)
-    if option == 1:
-        with open(f'{path}/Comite_Naive_F.csv', 'a', encoding='utf=8') as f:
-            f.write(
-                # DATASET
-                f'\n"{dataset}",'
-                # LABELLED-LEVEL
-                f'{labelled_level},'
-                #ACC-AVERAGE
-                f'{acc_average},'
-                #STANDARD-DEVIATION-ACC
-                f'{standard_deviation_acc},'
-                #F1-SCORE-AVERAGE
-                f'{f1_average},'
-                #STANDARD-DEVIATION-ACC
-                f'{standard_deviation_f1}'
-            )
-    elif option == 2:
-        with open(f'{path}/Comite_Tree_F.csv', 'a') as f:
-            f.write(
-                # DATASET
-                f'\n"{dataset}",'
-                # LABELLED-LEVEL
-                f'{labelled_level},'
-                #ACC-AVERAGE
-                f'{acc_average},'
-                #STANDARD-DEVIATION-ACC
-                f'{standard_deviation_acc},'
-                #F1-SCORE-AVERAGE
-                f'{f1_average},'
-                #STANDARD-DEVIATION-ACC
-                f'{standard_deviation_f1}'
-            )
-    elif option == 3:
-        with open(f'{path}/Comite_KNN_F.csv', 'a', encoding='utf-8') as f:
-            f.write(
-                # DATASET
-                f'\n"{dataset}",'
-                # LABELLED-LEVEL
-                f'{labelled_level},'
-                #ACC-AVERAGE
-                f'{acc_average},'
-                #STANDARD-DEVIATION-ACC
-                f'{standard_deviation_acc},'
-                #F1-SCORE-AVERAGE
-                f'{f1_average},'
-                #STANDARD-DEVIATION-ACC
-                f'{standard_deviation_f1}'
-            )
-    elif option == 4:
-        with open(
-            f'{path}/Comite_Heterogeneo_F.csv', 'a', encoding='utf-8'
-        ) as f:
-            f.write(
-                # DATASET
-                f'\n"{dataset}",'
-                # LABELLED-LEVEL
-                f'{labelled_level},'
-                #ACC-AVERAGE
-                f'{acc_average},'
-                #STANDARD-DEVIATION-ACC
-                f'{standard_deviation_acc},'
-                #F1-SCORE-AVERAGE
-                f'{f1_average},'
-                #STANDARD-DEVIATION-ACC
-                f'{standard_deviation_f1}'
-            )
+    acc_average = mean(fold_result_acc)
+    standard_deviation_acc = stdev(fold_result_acc)
+    f1_average = mean(fold_result_f1_score)
+    standard_deviation_f1 = stdev(fold_result_f1_score)
+
+    committee_files = {
+        1: "Comite_Naive_F.csv",
+        2: "Comite_Tree_F.csv",
+        3: "Comite_KNN_F.csv",
+        4: "Comite_Heterogeneo_F.csv",
+    }
+
+    file_name = committee_files.get(option, "Comite_Heterogeneo_F.csv")
+
+    with open(f'{path}/{file_name}', 'a', encoding='utf-8') as f:
+        f.write(
+            f'\n"{dataset}",{labelled_level},{acc_average},{standard_deviation_acc},{f1_average},{standard_deviation_f1}'
+        )

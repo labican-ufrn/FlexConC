@@ -9,12 +9,12 @@ class Ensemble:
     seus métodos
     """
 
-    def __init__(self, ssl_algorithm: callable, **kwargs):
+    def __init__(self, ssl_algorithm: callable, **kwargs) -> None:
         self.ensemble = []
         self.ssl_algorithm = ssl_algorithm
         self.params = kwargs
 
-    def add_classifier(self, classifier):
+    def add_classifier(self, classifier) -> None:
         """
         Adiciona um novo classificador no cômite
 
@@ -24,7 +24,7 @@ class Ensemble:
         flexconc = self.ssl_algorithm(classifier, **self.params)
         self.ensemble.append(flexconc)
 
-    def add_model(self, model):
+    def add_model(self, model) -> None:
         """
         Adiciona um classificador treinado ao cômite
 
@@ -33,7 +33,7 @@ class Ensemble:
         """
         self.ensemble.append(model)
 
-    def remover_classifier(self, classifier):
+    def remover_classifier(self, classifier) -> None:
         """
         Remove um classificador do cômite
 
@@ -61,13 +61,13 @@ class Ensemble:
 
         return measure_ensemble
 
-    def drop_ensemble(self):
+    def drop_ensemble(self) -> None:
         """
         Esvazia o cômite de classificadores
         """
         self.ensemble = []
 
-    def fit_ensemble(self, instances, classes):
+    def fit_ensemble(self, instances, classes) -> None:
         """
         Treina os classificadores presentes no cômite
         """
@@ -75,7 +75,7 @@ class Ensemble:
         for classifier in self.ensemble:
             self.fit_single_classifier(classifier, instances, classes)
 
-    def fit_single_classifier(self, classifier, instances, classes):
+    def fit_single_classifier(self, classifier, instances, classes) -> object:
         """
         Treinar cada classificador iterativamente
 
@@ -87,7 +87,7 @@ class Ensemble:
 
         return classifier.fit(instances, classes)
 
-    def predict_one_classifier(self, classifier, instances):
+    def predict_one_classifier(self, classifier, instances) -> np.ndarray:
         """
         Retorna a predição de um classificador
         Args:
@@ -98,7 +98,7 @@ class Ensemble:
 
         return y_pred
 
-    def predict(self, instances):
+    def predict(self, instances) -> np.ndarray:
         """
         Retorna a predição mais comum entre as instâncias
         Args:
