@@ -2,7 +2,6 @@ import numpy as np
 from sklearn.base import clone
 from sklearn.utils import safe_mask
 from abc import abstractmethod
-
 from base_flexcons import BaseFlexCon
 
 
@@ -28,60 +27,13 @@ class FlexConC(BaseFlexCon):
         self.select_model = select_model
         self.committee_classifiers = []
 
-    def fit(self, X, y):
-        """
-        Função que treina o classificador.
-
-        Args:
-            X (list): instâncias
-            y (list): rótulos
-
-        Returns:
-            Classificador treinado
-        """
-        # Inicialização do classificador e acurácia inicial
-        labeled_indices = np.where(y != -1)[0]
-        unlabeled_indices = np.where(y == -1)[0]
-
-        init_acc = self.train_new_classifier(labeled_indices, X, y)
-
-        for self.n_iter_ in range(self.max_iter):
-
-            # Verifica se ainda há instâncias não rotuladas
-            if len(unlabeled_indices) == 0:
-                break
-
-            # Fazer previsões e selecionar instâncias
-            self.pred_x_it = self.storage_predict(
-                unlabeled_indices,
-                self.classifier_.predict_proba(X[unlabeled_indices]).max(axis=1),
-                self.classifier_.predict(X[unlabeled_indices])
-            )
-            selected_indices, predictions = self.select_instances_by_rules()
-
-            if len(selected_indices) == 0:
-                break
-
-            # Atualizar o conjunto de instâncias rotuladas
-            self.add_new_labeled(selected_indices, selected_indices, predictions)
-
-            # Ajuste do threshold baseado na acurácia local e mínima aceitável
-            local_measure = self.calc_local_measure(X[safe_mask(X, labeled_indices)], y[labeled_indices], self.classifier_)
-            if local_measure > (self.init_acc + 0.01) and (self.threshold - self.cr) > 0.0:
-                self.threshold -= self.cr
-            elif local_measure < (self.init_acc - 0.01) and (self.threshold + self.cr) <= 1:
-                self.threshold += self.cr
-
-            # Re-treinar o classificador com o novo conjunto de dados rotulados
-            init_acc = self.train_new_classifier(labeled_indices, X, y)
-
-        return self
-
-    def update_committee(self):
-        """
-        Adiciona o classificador atual ao comitê para FlexCon-C1(s) e FlexCon-C1(v).
-        """
-        self.committee_classifiers.append(clone(self.classifier_))
+    def adjust_threshold(self):
+        # Ajuste do threshold baseado na acurácia local e mínima aceitável
+        local_measure = self.calc_local_measure(self.X[safe_mask(self.X, np.where(self.y != -1)[0])], self.y[np.where(self.y != -1)[0]], self.classifier_)
+        if local_measure > (self.init_acc + 0.01) and (self.threshold - self.cr) > 0.0:
+            self.threshold -= self.cr
+        elif local_measure < (self.init_acc - 0.01) and (self.threshold + self.cr) <= 1:
+            self.threshold += self.cr
 
     def label_by_committee_sum(self, X):
         """
@@ -134,12 +86,12 @@ class FlexConC(BaseFlexCon):
         """
         return self.select_model(self)
 
-def flexconC1s(instance):
+def flexconC1s(self, instance):
         """
         Estratégia de seleção para FlexCon-C1(s).
         """
         # Adiciona o classificador atual ao comitê
-        self.update_committee()
+        self.committee_classifiers.append(clone(self.classifier_))
 
         # Obtém os rótulos previstos usando a soma das probabilidades no comitê
         labels_sum = self.label_by_committee_sum(self.pred_x_it.keys())
@@ -153,12 +105,12 @@ def flexconC1s(instance):
         # Retorna as instâncias selecionadas e seus rótulos baseados na soma
         return selected, labels_sum[selected]
 
-def flexconC1v(instance):
+def flexconC1v(self, instance):
     """
     Estratégia de seleção para FlexCon-C1(v).
     """
     # Adiciona o classificador atual ao comitê
-    self.update_committee()
+    self.committee_classifiers.append(clone(self.classifier_))
 
     # Obtém os rótulos previstos usando o voto majoritário no comitê
     labels_vote = self.label_by_committee_vote(self.pred_x_it.keys())
@@ -172,7 +124,7 @@ def flexconC1v(instance):
     # Retorna as instâncias selecionadas e seus rótulos baseados no voto
     return selected, labels_vote[selected]
 
-def flexconC2(instance):
+def flexconC2(self, instance):
     """
     Estratégia de seleção para FlexCon-C2.
     """
