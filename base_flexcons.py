@@ -16,10 +16,55 @@ class BaseFlexCon(SelfTrainingClassifier):
         self.pred_x_it = {}
         self.cl_memory = []
         self.classifier_ = clone(base_classifier)
+        self.accuracy_history = []
 
     @abstractmethod
-    def fit(self, X, y):
+    def adjust_threshold(self, local_measure):
+        """
+        Método abstrato para ajuste do threshold. Cada classe derivada deve implementar sua lógica específica.
+        """
         pass
+
+    def fit(self, X, y):
+        # Inicialização do classificador e acurácia inicial
+        labeled_indices = np.where(y != -1)[0]
+        unlabeled_indices = np.where(y == -1)[0]
+
+        init_acc = self.train_new_classifier(labeled_indices, X, y)
+
+        for self.n_iter_ in range(self.max_iter):
+
+            # Verifica se ainda há instâncias não rotuladas
+            if len(unlabeled_indices) == 0:
+                break
+
+            # Fazer previsões e selecionar instâncias
+            self.pred_x_it = self.storage_predict(
+                unlabeled_indices,
+                self.classifier_.predict_proba(X[unlabeled_indices]).max(axis=1),
+                self.classifier_.predict(X[unlabeled_indices])
+            )
+            selected_indices, predictions = self.select_instances_by_rules()
+
+            if len(selected_indices) == 0:
+                break
+
+            # Atualizar o conjunto de instâncias rotuladas
+            self.add_new_labeled(selected_indices, selected_indices, predictions)
+
+            # Calcula a métrica local (usada para ajuste do threshold)
+            local_measure = self.calc_local_measure(X[safe_mask(X, labeled_indices)], y[labeled_indices], self.classifier_)
+
+            # Atualiza o histórico de precisão
+            self.accuracy_history.append(local_measure)
+
+            # Ajuste do threshold baseado em critério específico da subclasse
+            self.adjust_threshold(local_measure)
+
+            # Re-treinar o classificador com o novo conjunto de dados rotulados
+            init_acc = self.train_new_classifier(labeled_indices, X, y)
+
+        return self
 
     def calc_local_measure(self, X, y_true, classifier):
         """
@@ -82,75 +127,86 @@ class BaseFlexCon(SelfTrainingClassifier):
 
     def rule_1(self):
         """
-        Regra responsável por verificar se as classes são iguais E as duas
-            confianças preditas é maior que o limiar
+        Regra responsável por verificar se as classes são iguais E ambas as
+        confianças preditas são maiores que o limiar.
 
         Returns:
-            a lista correspondente pela condição
+            A lista correspondente pela condição.
         """
         selected, classes_selected = [], []
-        for i in self.pred_x_it:
-            if (self.pred_x_it[i]["confidence"] >= self.threshold and
-                self.pred_x_it[i]["confidence"] >= self.threshold and
-                self.pred_x_it[i]["classes"] == self.pred_x_it[i]["classes"]):
+
+        for i, data in self.pred_x_it.items():
+            first_confidence = self.dict_first[i]["confidence"]
+            confidence = data["confidence"]
+            first_class = self.dict_first[i]["classes"]
+            predicted_class = data["classes"]
+
+            if first_confidence >= self.threshold and confidence >= self.threshold and first_class == predicted_class:
                 selected.append(i)
-                classes_selected.append(self.pred_x_it[i]["classes"])
+                classes_selected.append(predicted_class)
+
         return selected, classes_selected
 
     def rule_2(self):
         """
-        regra responsável por verificar se as classes são iguais E uma das
-        confianças preditas é maior que o limiar
+        Regra responsável por verificar se as classes são iguais E ao menos uma
+        das confianças preditas é maior que o limiar.
 
         Returns:
-        a lista correspondente pela condição
+            A lista correspondente pela condição.
         """
         selected, classes_selected = [], []
-        for i in self.pred_x_it:
-            if (self.pred_x_it[i]["confidence"] >= self.threshold or
-                self.pred_x_it[i]["confidence"] >= self.threshold) and \
-                self.pred_x_it[i]["classes"] == self.pred_x_it[i]["classes"]:
+
+        for i, data in self.pred_x_it.items():
+            first_confidence = self.dict_first[i]["confidence"]
+            confidence = data["confidence"]
+            first_class = self.dict_first[i]["classes"]
+            predicted_class = data["classes"]
+
+            if (first_confidence >= self.threshold or confidence >= self.threshold) and first_class == predicted_class:
                 selected.append(i)
-                classes_selected.append(self.pred_x_it[i]["classes"])
+                classes_selected.append(predicted_class)
+
         return selected, classes_selected
 
     def rule_3(self):
         """
-        regra responsável por verificar se as classes são diferentes E  as
-        confianças preditas são maiores que o limiar
+        Regra responsável por verificar se as classes são diferentes E ambas as
+        confianças preditas são maiores que o limiar.
 
         Returns:
-        a lista correspondente pela condição
+            A lista correspondente pela condição.
         """
         selected = []
 
-        for i in self.pred_x_it:
-            if (
-                self.dict_first[i]["classes"] != self.pred_x_it[i]["classes"]
-                and self.dict_first[i]["confidence"] >= self.threshold
-                and self.pred_x_it[i]["confidence"] >= self.threshold
-            ):
+        for i, data in self.pred_x_it.items():
+            first_confidence = self.dict_first[i]["confidence"]
+            confidence = data["confidence"]
+            first_class = self.dict_first[i]["classes"]
+            predicted_class = data["classes"]
+
+            if first_class != predicted_class and first_confidence >= self.threshold and confidence >= self.threshold:
                 selected.append(i)
 
         return selected, self.remember(selected)
 
     def rule_4(self):
         """
-        regra responsável por verificar se as classes são diferentes E uma das
-        confianças preditas é maior que o limiar
+        Regra responsável por verificar se as classes são diferentes E uma das
+        confianças preditas é maior que o limiar.
 
         Returns:
-        a lista correspondente pela condição
+            A lista correspondente pela condição.
         """
         selected = []
 
-        for i in self.pred_x_it:
-            if self.dict_first[i]["classes"] != self.pred_x_it[i][
-                "classes"
-            ] and (
-                self.dict_first[i]["confidence"] >= self.threshold
-                or self.pred_x_it[i]["confidence"] >= self.threshold
-            ):
+        for i, data in self.pred_x_it.items():
+            first_confidence = self.dict_first[i]["confidence"]
+            confidence = data["confidence"]
+            first_class = self.dict_first[i]["classes"]
+            predicted_class = data["classes"]
+
+            if first_class != predicted_class and (first_confidence >= self.threshold or confidence >= self.threshold):
                 selected.append(i)
 
         return selected, self.remember(selected)

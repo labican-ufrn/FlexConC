@@ -1,2 +1,2 @@
-/venv
-/path_for_results
+.vscode/
+venv/
