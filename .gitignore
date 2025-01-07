@@ -1,3 +1,21 @@
 flexconC/
 __pycache__/
 piton/
+datasets_bck/
+results/
+datasets-all/
+results/
+results (ja aplicados)/
+results (old)/
+results-seed/
+results-teste/
+datasets/
+.vscode/
+.venv/
+venv/
+plots/
+path_for_results/
+*.txt
+*.dat
+*.png
+*.csv
