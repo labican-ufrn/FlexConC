@@ -1,7 +1,6 @@
 import numpy as np
+from flexcon import BaseFlexConC
 from sklearn.utils import safe_mask
-
-from src.ssl.flexcon import BaseFlexConC
 
 
 class SelfFlexCon(BaseFlexConC):
@@ -17,6 +16,13 @@ class SelfFlexCon(BaseFlexConC):
             **kwargs
         )
         self.n_iter_ = 0
+        self.size_y = 0
+        self.cl_memory = []
+        self.pred_x_it = None
+        self.threshold = None
+        self.dict_first = None
+        self.termination_condition_ = None
+        self.classes_ = None
 
     # def __str__(self):
     #     msg = super().__str__()

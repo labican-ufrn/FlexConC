@@ -1,10 +1,9 @@
 from mlabican import BaseFlexCon
-from numpy import where
 
 
-class FlexCon(BaseFlexCon):
+class FlexConG(BaseFlexCon):
     """
-    Classe que implementa o método FlexCon
+    Classe que implementa o método FlexConG
 
     Args:
         BaseFlexCon (Object)
@@ -12,15 +11,17 @@ class FlexCon(BaseFlexCon):
     def __init__(
         self,
         base_classifier,
+        cr=0.05,
         threshold=0.95,
         max_iter=10,
         verbose=False
     ):
         """
-        Inicializa a classe FlexCon
+        Inicializa a classe FlexConG
 
         Args:
             base_classifier (Object): Classe base FlexCon.
+            cr (float): Taxa de variação do threshold. Defaults to 0.05.
             threshold (float): Valor inicial do threshold. Defaults to 0.95.
             max_iter (int): Número máximo de iterações. Defaults to 10.
             verbose (bool): Controle de exibição de mensagem. Defaults to False
@@ -31,12 +32,11 @@ class FlexCon(BaseFlexCon):
             max_iter=max_iter,
             verbose=verbose
         )
+        self.cr = cr
 
-    def adjust_threshold(self, local_measure):
+    def adjust_threshold(self):
         """
-        Ajusta o threshold dinamicamente com a lógica do FlexCon.
+        Ajusta o threshold dinamicamente com a lógica do FlexConG.
         """
-        labeled_count = len(where(self.transduction_ != -1)[0])
-        unlabeled_count = len(where(self.transduction_ == -1)[0])
-        self.threshold = (self.threshold + local_measure +
-            (labeled_count / unlabeled_count)) / 3
+        if (self.threshold - self.cr) > 0.0:
+            self.threshold -= self.cr

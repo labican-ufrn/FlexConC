@@ -1,7 +1,7 @@
-from sklearn.base import clone
-from sklearn.utils import check_array
-from sklearn.exceptions import NotFittedError
 import numpy as np
+from sklearn.base import clone
+from sklearn.exceptions import NotFittedError
+from sklearn.utils import check_array
 
 
 class SelfTrainingClassifier:

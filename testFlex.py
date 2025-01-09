@@ -1,13 +1,10 @@
-from sklearn.datasets import load_iris
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
 import numpy as np
-
-# Importa as classes FlexCon, FlexConG, FlexConC
-from flexcon import FlexCon
-from flexconG import FlexConG
-from flexconC import *
+from flexconc import *
+from mlabican import FlexCon, FlexConG
+from sklearn.datasets import load_iris
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
 
 # Carrega a base de dados Iris
 data = load_iris()

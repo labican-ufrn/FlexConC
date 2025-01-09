@@ -1,8 +1,7 @@
 import numpy as np
+from base_flexcons import BaseFlexCon
 from sklearn.base import clone
 from sklearn.utils import safe_mask
-from abc import abstractmethod
-from base_flexcons import BaseFlexCon
 
 
 class FlexConC(BaseFlexCon):

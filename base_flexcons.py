@@ -1,14 +1,27 @@
 from abc import abstractmethod
 from typing import Dict, List, Optional
+
 import numpy as np
-from sklearn.base import clone
-from sklearn.utils import safe_mask
-from sklearn.metrics import accuracy_score
 from selfTrainingInitial import SelfTrainingClassifier
+from sklearn.base import clone
+from sklearn.metrics import accuracy_score
+from sklearn.utils import safe_mask
 
 
 class BaseFlexCon(SelfTrainingClassifier):
-    def __init__(self, base_classifier, threshold=0.95, verbose=False, max_iter=10):
+    """
+    Classe que serve como base para os diferentes métodos FlexCon
+
+    Args:
+        SelfTrainingClassifier: Método SelfTraining
+    """
+    def __init__(
+        self,
+        base_classifier,
+        threshold=0.95,
+        verbose=False,
+        max_iter=10
+    ):
         self.base_classifier = base_classifier
         self.threshold = threshold
         self.verbose = verbose
@@ -21,16 +34,30 @@ class BaseFlexCon(SelfTrainingClassifier):
     @abstractmethod
     def adjust_threshold(self, local_measure):
         """
-        Método abstrato para ajuste do threshold. Cada classe derivada deve implementar sua lógica específica.
+        Método abstrato para ajuste do threshold.
+        Cada classe derivada deve implementar sua lógica específica.
         """
         pass
 
     def fit(self, X, y):
+        """
+        Treina o classificador usando X e y como dados de treinamento.
+
+        Args:
+            X (array-like, shape = [n_samples, n_features]):
+                Matriz de características contendo os dados para o treinamento.
+            y (array-like, shape = [n_samples]):
+                Vetor de rótulos associados aos dados de entrada.
+                Valores de rótulo não rotulados devem ser representados por -1.
+
+        Returns:
+            Object: Classificador treinado
+        """
         # Inicialização do classificador e acurácia inicial
         labeled_indices = np.where(y != -1)[0]
         unlabeled_indices = np.where(y == -1)[0]
 
-        init_acc = self.train_new_classifier(labeled_indices, X, y)
+        self.train_new_classifier(labeled_indices, X, y)
 
         for self.n_iter_ in range(self.max_iter):
 
@@ -50,10 +77,14 @@ class BaseFlexCon(SelfTrainingClassifier):
                 break
 
             # Atualizar o conjunto de instâncias rotuladas
-            self.add_new_labeled(selected_indices, selected_indices, predictions)
+            self.add_new_labeled(selected_indices,selected_indices,predictions)
 
             # Calcula a métrica local (usada para ajuste do threshold)
-            local_measure = self.calc_local_measure(X[safe_mask(X, labeled_indices)], y[labeled_indices], self.classifier_)
+            local_measure = self.calc_local_measure(
+                X[safe_mask(X, labeled_indices)],
+                y[labeled_indices],
+                self.classifier_
+            )
 
             # Atualiza o histórico de precisão
             self.accuracy_history.append(local_measure)
@@ -62,7 +93,7 @@ class BaseFlexCon(SelfTrainingClassifier):
             self.adjust_threshold(local_measure)
 
             # Re-treinar o classificador com o novo conjunto de dados rotulados
-            init_acc = self.train_new_classifier(labeled_indices, X, y)
+            self.train_new_classifier(labeled_indices, X, y)
 
         return self
 
@@ -81,7 +112,12 @@ class BaseFlexCon(SelfTrainingClassifier):
         y_pred = classifier.predict(X)
         return accuracy_score(y_true, y_pred)
 
-    def update_memory(self, instances: List, labels: List, weights: Optional[List] = None):
+    def update_memory(
+        self,
+        instances: List,
+        labels: List,
+        weights: Optional[List] = None
+    ):
         """
         Atualiza a matriz de instâncias rotuladas
 
@@ -108,7 +144,12 @@ class BaseFlexCon(SelfTrainingClassifier):
         """
         return [np.argmax(self.cl_memory[x]) for x in X]
 
-    def storage_predict(self, idx, confidence, classes) -> Dict[int, Dict[float, int]]:
+    def storage_predict(
+        self,
+        idx,
+        confidence,
+        classes
+    ) -> Dict[int, Dict[float, int]]:
         """
         Responsável por armazenar o dicionário de dados da matriz
 
@@ -141,7 +182,8 @@ class BaseFlexCon(SelfTrainingClassifier):
             first_class = self.dict_first[i]["classes"]
             predicted_class = data["classes"]
 
-            if first_confidence >= self.threshold and confidence >= self.threshold and first_class == predicted_class:
+            if first_confidence >= self.threshold and \
+            confidence >= self.threshold and first_class == predicted_class:
                 selected.append(i)
                 classes_selected.append(predicted_class)
 
@@ -163,7 +205,8 @@ class BaseFlexCon(SelfTrainingClassifier):
             first_class = self.dict_first[i]["classes"]
             predicted_class = data["classes"]
 
-            if (first_confidence >= self.threshold or confidence >= self.threshold) and first_class == predicted_class:
+            if (first_confidence >= self.threshold or \
+            confidence >= self.threshold) and first_class == predicted_class:
                 selected.append(i)
                 classes_selected.append(predicted_class)
 
@@ -185,7 +228,9 @@ class BaseFlexCon(SelfTrainingClassifier):
             first_class = self.dict_first[i]["classes"]
             predicted_class = data["classes"]
 
-            if first_class != predicted_class and first_confidence >= self.threshold and confidence >= self.threshold:
+            if first_class != predicted_class and \
+            first_confidence >= self.threshold and \
+            confidence >= self.threshold:
                 selected.append(i)
 
         return selected, self.remember(selected)
@@ -206,14 +251,17 @@ class BaseFlexCon(SelfTrainingClassifier):
             first_class = self.dict_first[i]["classes"]
             predicted_class = data["classes"]
 
-            if first_class != predicted_class and (first_confidence >= self.threshold or confidence >= self.threshold):
+            if first_class != predicted_class and \
+            (first_confidence >= self.threshold \
+            or confidence >= self.threshold):
                 selected.append(i)
 
         return selected, self.remember(selected)
 
     def train_new_classifier(self, has_label, X, y):
         """
-        Treina um classificador usando apenas as instâncias rotuladas e mede sua acurácia.
+        Treina um classificador usando apenas as instâncias rotuladas
+        e mede sua acurácia.
 
         Args:
             has_label: índices das instâncias rotuladas
@@ -224,7 +272,8 @@ class BaseFlexCon(SelfTrainingClassifier):
             Acurácia inicial do modelo
         """
 
-        # Inicializa as estruturas de transdução e índices de iteração para as instâncias rotuladas
+        # Inicializa as estruturas de transdução e
+        # índices de iteração para as instâncias rotuladas
         self.transduction_ = np.copy(y)
         self.labeled_iter_ = np.full_like(y, -1)
         self.labeled_iter_[has_label] = 0
@@ -237,8 +286,12 @@ class BaseFlexCon(SelfTrainingClassifier):
         y_labeled = self.transduction_[labeled_mask]
         self.classifier_.fit(X_labeled, y_labeled)
 
-        # Calcula e retorna a acurácia inicial do modelo com as instâncias rotuladas
-        init_acc = self.calc_local_measure(X_labeled, y_labeled, self.classifier_)
+        # Retorna a acurácia inicial do modelo com as instâncias rotuladas
+        init_acc = self.calc_local_measure(
+            X_labeled,
+            y_labeled,
+            self.classifier_
+        )
         return init_acc
 
 

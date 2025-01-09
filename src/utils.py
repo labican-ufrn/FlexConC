@@ -75,7 +75,7 @@ def select_labels(y_train, X_train, labelled_percentage):
 
 def result(option, dataset, y_test, y_pred, path, labelled_level, rounds):
     """
-    Salva os resultados dos comitês em arquivos CSV com base na opção escolhida.
+    Salva os resultados dos comitês em arquivos CSV com base na opção escolhida
 
     Args:
         option (int): Identificador do comitê.
@@ -115,7 +115,7 @@ def calculate_mean_stdev(
     fold_result_f1_score
 ):
     """
-    Calcula e salva a média e o desvio padrão de ACC e F1-Score para diferentes comitês.
+    Calcula a média e o desvio padrão de ACC e F1-Score para diferentes comitês
 
     Args:
         fold_result_acc (list): Lista de ACCs por rodada.
@@ -141,5 +141,10 @@ def calculate_mean_stdev(
 
     with open(f'{path}/{file_name}', 'a', encoding='utf-8') as f:
         f.write(
-            f'\n"{dataset}",{labelled_level},{acc_average},{standard_deviation_acc},{f1_average},{standard_deviation_f1}'
+            f'\n"{dataset}",'
+            f'{labelled_level},'
+            f'{acc_average},'
+            f'{standard_deviation_acc},'
+            f'{f1_average},'
+            f'{standard_deviation_f1}'
         )
