@@ -10,7 +10,7 @@ from sklearn.utils import safe_mask
 class BaseFlexConC(SelfTrainingClassifier):
     """
     Funcão do Flexcon-C, responsável por classificar instâncias com base em
-        modelos de aprendizado semisupervisionado
+    modelos de aprendizado semisupervisionado
     """
 
     def __init__(
