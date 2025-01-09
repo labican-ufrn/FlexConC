@@ -123,7 +123,7 @@ class BaseFlexCon(SelfTrainingClassifier):
 
         Args:
             instances: instâncias
-            labels: rotulos
+            labels: rótulos
             weights: Pesos de cada classe
         """
         if not weights:
@@ -298,11 +298,11 @@ class BaseFlexCon(SelfTrainingClassifier):
 
     def add_new_labeled(self, selected_full, selected, pred):
         """
-        Função que retorna as intâncias rotuladas
+        Função que retorna as instâncias rotuladas
 
         Args:
             selected_full: lista com os indices das instâncias originais
-            selected: lista das intâncias com acc acima do limiar
+            selected: lista das instâncias com acc acima do limiar
             pred: predição das instâncias não rotuladas
         """
         self.transduction_[selected_full] = pred[selected]
